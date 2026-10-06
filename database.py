@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from typing import List
 from tinyflux.queries import TimeQuery
 from datetime import datetime, timedelta, timezone

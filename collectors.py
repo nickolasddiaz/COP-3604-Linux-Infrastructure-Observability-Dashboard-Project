@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 import requests
 
 from metrics import Metrics
 
-SERVER_URL = "http://127.0.0.1:8000"
+SERVER_URL = "http://127.0.0.1:8080"
 
 def get_metrics() -> dict[str, float]:
     """Gets a dictionary of the metrics.
@@ -30,11 +31,10 @@ def send_to_server(mac_address: str, payload: dict) -> None:
         "content": payload
     }
 
-    response = requests.post(f"{SERVER_URL}/metrics", json=payload)
+    response = requests.post(f"{SERVER_URL}", json=payload)
     
     if response.status_code == 200:
-        print("\n--- [POST] Response From Server After Sending ---")
-        print(response.json())
+        print("\n Data send: Reponse code 200")
     else:
         print(f"Failed to send data: {response.status_code}")
 
