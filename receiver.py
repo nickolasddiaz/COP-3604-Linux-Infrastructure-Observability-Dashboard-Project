@@ -5,11 +5,15 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import asyncio
 from named_pipe import NamedPipe
 
-def start_receiver():
-
+def start_receiver(port: int = 8080):
+    """
+    Starts a web server that receives requests/metrics
+    Once received it will send that data to the named pipe
+    """
     namedPipe: NamedPipe = NamedPipe()
     asyncio.run(namedPipe.set_writing_mode())
 
+    # BaseHTTPRequestHandler to handle the post request
     class Server(BaseHTTPRequestHandler):
         def _set_response(self):
             self.send_response(200)
@@ -21,13 +25,14 @@ def start_receiver():
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
 
             print(post_data)
+            # send data to the named pipe
             asyncio.run(namedPipe.send_message(post_data))
 
             self._set_response()
             self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
 
 
-    def run(server_class=HTTPServer, handler_class=Server, port=8080):
+    def run(server_class=HTTPServer, handler_class=Server):
         server_address = ('', port)
         httpd = server_class(server_address, handler_class)
         print(f"Starting httpd server on {port}\n")

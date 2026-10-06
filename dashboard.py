@@ -22,14 +22,16 @@ class Dashboard:
         await self.namedPipe.set_reading_mode()
 
         # create a new thread and allow it to print in the main console
+        # start_receiver is a seprate process, which receives web requests and sends that data to the named pipe
         self.receiver_thread = threading.Thread(target=start_receiver)
         self.receiver_thread.start()
 
+        # asynchronous read from the pipe every X amount of seconds 
         self.scheduler_task = asyncio.create_task(self.background_scheduler())
 
     async def receive_from_client(self) -> None:
         """
-        Receives a post message from the client and stores it in the DB
+        Receives a post message from the named pipe and stores it in the DB
         """
 
         message = await self.namedPipe.receive_message()
@@ -41,7 +43,8 @@ class Dashboard:
 
     async def background_scheduler(self):
         while True:
-            await self.receive_from_client()
+            # windows specific printing will not work
+            value = await self.receive_from_client()
             await asyncio.sleep(5) 
 
 

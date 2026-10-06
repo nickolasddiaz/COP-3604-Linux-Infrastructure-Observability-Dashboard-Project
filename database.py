@@ -59,6 +59,9 @@ class TinyFluxDB:
         """
         return self.db.get_tag_values()
 
+    def generate_dummy_data(self):
+        raise NotImplementedError
+
 
 if __name__ == "__main__": 
     db = TinyFluxDB()

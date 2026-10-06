@@ -12,6 +12,33 @@ Design, implement, and evaluate a performance monitoring solution for a remote, 
 
 Python 3.14 or later
 
+## Files
+
+```bash
+COP-3604 Linux Infrastructure Observability Dashboard Project/$ tree -F
+├── app.py           # Streamlit web app
+├── collectors.py    # Collects performance metrics and sends data to receiver
+├── dashboard.py     # Spawns Streamlit app, named_pipe connections, and web receiver
+├── database.csv     # TinyFluxDB DB file
+├── database.py      # TinyFluxDB wrapper to store, insert, and query metrics
+├── metrics.py       # Enum for metric types
+├── named_pipe.py    # Named pipe wrapper to share data between processes
+├── receiver.py      # Starts web server to collect metrics and pipe them forward
+└── requirements.txt # List of required packages
+```
+
+## Diagram
+
+```mermaid
+graph TD;
+    A[Metrics Sender i.e. collectors.py]--> |HTTP Post Request| B[Web Server i.e. receiver.py];
+    B--> |Named Pipe| C[Main Server i.e. dashboard.py];
+    C--> |DB connection| D[Time Series DB i.e. database.py];
+    C<--> |Websockets Connection|E[Front End website using streamlit i.e. app.py];
+```
+
+
+
 ### Step-by-Step Guide
 
 1. **Clone the repository**
@@ -31,7 +58,7 @@ Python 3.14 or later
 3. **Install dependencies**
 
    ```bash
-   pip install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
 
 4. **Run the collectors**
