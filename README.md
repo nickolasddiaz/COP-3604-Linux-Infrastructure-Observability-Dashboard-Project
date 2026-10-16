@@ -71,6 +71,14 @@ graph TD;
    streamlit run dashboard.py
    ```
 
+6. **Setup Single-IP Security**
+
+   ```bash
+   # Example using iptables on the monitored VM (replace X.X.X.X with Dashboard IP)
+   sudo iptables -A INPUT -p tcp -s X.X.X.X --dport 5000 -j ACCEPT
+   sudo iptables -A INPUT -p tcp --dport 5000 -j DROP
+   ```
+
 ## Contributers
 
 Jordan Baumann, Nickolas Diaz, Sydney Prall, Andres Saldarriaga

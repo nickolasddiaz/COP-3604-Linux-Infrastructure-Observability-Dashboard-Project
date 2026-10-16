@@ -8,9 +8,9 @@ import argparse
 
 from metrics import Metrics
 
-"""SERVER_URL = "http://127.0.0.1:8080""""
+#"""SERVER_URL = "http://127.0.0.1:8080""""
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Metrics Collection")
     parser.add_argument (
         "--ip",
@@ -65,7 +65,7 @@ def get_mac_address() -> str:
         raise LookupError("Mac-Address cannot be retreived")
     return mac
 
-def send_to_server(mac_address: str, payload: dict) -> None:
+def send_to_server(mac_address: str, payload: dict, SERVER_URL: str) -> None:
     """Triggers a POST request to deliver a JSON payload to the server."""
 
 
@@ -86,4 +86,4 @@ if __name__ == "__main__":
     args = parse_arguments()
     payload = get_metrics()
     mac_address = get_mac_address()
-    send_to_server(mac_address, payload)
+    send_to_server(mac_address, payload, args.ip_address)
