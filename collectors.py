@@ -5,11 +5,42 @@ from metrics import Metrics
 
 SERVER_URL = "http://127.0.0.1:8080"
 
+def get_cpu_use() -> float:
+    """ Percent of utilization """
+    return float(psutil.cpu_percent(interval=0.5))
+
+def get_memory_use() -> float:
+    """ Percent of utilization """
+    return float(psutil.virtual_memory().percent())
+
+def get_storage_use(mount_point: str = "/") -> float:
+    """ Percent of utilization """
+    return float(psutil.disk_usage(mount_point).percent)
+
+def get_network_use() -> float:
+    """ Total network use in Megabytes """
+    net = psutil.net_io_counters()
+    total_bytes = net.bytes_sent + net.bytes_received
+    return rount(total_bytes / (1024 * 1024), 2)
+
+def get_load() -> float:
+    """ Load average of system over 1 minute """
+    if hasattr(os, "getloadavg"):
+        return round(os.getloadavg()[0], 2)
+    return round(psutil.cpu_percent(interval=0.1) / 100.0 * (psutil.cpu_count) or 1)
+
 def get_metrics() -> dict[str, float]:
     """Gets a dictionary of the metrics.
 
         Returns: dict[str, float]: 
     """
+    return {
+        metrics.CPU: get_cpu_use(),
+        metrics.MEMORY: get_memory_use(),
+        metrics.STORAGE: get_storage_use(),
+        metrics.NETWORK: get_network_use(),
+        metrics.LOAD: get_load(),
+    }
 
     # To-do add more metrics and create functions to get them
     return {

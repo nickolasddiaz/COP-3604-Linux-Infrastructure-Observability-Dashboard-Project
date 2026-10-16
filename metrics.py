@@ -6,3 +6,5 @@ class Metrics(StrEnum):
     CPU = auto()
     MEMORY = auto()
     STORAGE = auto() 
+    NETWORK = auto()
+    LOAD = auto()
