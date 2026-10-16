@@ -4,7 +4,7 @@ This a group project from Fall 2026 COP3604 – System Administration using unix
 
 ## Objective
 
-Design, implement, and evaluate a performance monitoring solution for a remote, cloud-based Linux infrastructure based on number real-world stresses that affect production servers.
+The primary objective of this collaboritive (group) project is to design, implement, and evaluate a performance monitoring solution for a remote, cloud-based Linux infrastructure based on number real-world stresses that affect production servers.
 
 ## Instalation
 
@@ -16,7 +16,7 @@ Python 3.14 or later
 
 ```bash
 COP-3604 Linux Infrastructure Observability Dashboard Project/$ tree -F
-├── app.py           # Streamlit web app
+├── app.py           # Streamlit web app, and uses plotly to visualise the data
 ├── collectors.py    # Collects performance metrics and sends data to receiver
 ├── dashboard.py     # Spawns Streamlit app, named_pipe connections, and web receiver
 ├── database.csv     # TinyFluxDB DB file
@@ -37,15 +37,13 @@ graph TD;
     C<--> |Websockets Connection|E[Front End website using streamlit i.e. app.py];
 ```
 
-
-
 ### Step-by-Step Guide
 
 1. **Clone the repository**
 
    ```bash
    git clone https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project.git
-   cd project-name
+   cd COP-3604-Linux-Infrastructure-Observability-Dashboard-Project
    ```
 
 2. **Create environment**
@@ -94,3 +92,27 @@ Jordan Baumann, Nickolas Diaz, Sydney Prall, Andres Saldarriaga
 - **Failure Handling:** Implement appropriate failure handling mechanisms to monitor the operation of agent or Api to restart automatically. Use a cron job to check their status every 5 minutes
 - **Version Control:** Use a Git or GitHub repository to manage version control for all code development branches and collaboration. All team members will have access to the repository and make meaningful updates to the code base reflected by numerous commits. The commits should tell a story about progress.
 - **Multiple Servers:** Each group member must be responsible for a cloud-based server deployment. If two students work together, then there will be two servers and one dashboard. For three students, then have three servers and one dashboard.
+
+## Deliverables
+
+- **Report:** Submit a modest project report in doc or pdf, that includes:
+  - Cover page that includes name of project, GitHub URL (public), date, course section and each member’s name
+  - Introduction and project objectives (1 paragraph)
+  - System architecture and design (1-2 paragraphs and diagrams)
+  - Experimental results and analysis presented in captioned diagrams, graphs, and screenshots from the dashboard. Each should be supported with 1 – 2 sentences each.  
+  - Problems faced (1 -2 paragraphs)
+  - What was learned (1 paragraph from each team member)
+  - Individual contribution table (displays activity type and percentage of effort for each team member)
+  
+- **Code:** Submit well-commented and organized source code for the stress script, agent or Api, cron job, and dashboard as the URL of the repository in the report. Do not upload source code to Canvas.
+- **Video operation:** Prepare a screen recorded video with or without narration.
+  - Display the dashboard in action. 1 -2 minute.
+  - Manually stop the Api or agent to demonstrate automatic restart.
+  - Start a stress event and display the appropriate dashboard.
+- **Go Live Test Day:** The Professor will review each student/group to view a live test of your dashboard.  The professor will interview each student about their contribution and comprehension of the project code.
+
+## Additional Notes
+
+- Do not use an off-the shelf monitoring system like Nagios, Splunk, or GCP’s vm monitoring tools. Develop your own data collection tools.
+- You may use libraries or frameworks to assist in developing a remote dashboard.
+- [Reference](https://wiki.ubuntu.com/Kernel/Reference/stress-ng)
