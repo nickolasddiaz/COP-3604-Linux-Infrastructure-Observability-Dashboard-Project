@@ -3,10 +3,23 @@ import os
 import psutil
 import requests
 from getmac import get_mac_address as gma
+import psutil
+import argparse
 
 from metrics import Metrics
 
-SERVER_URL = "http://127.0.0.1:8080"
+"""SERVER_URL = "http://127.0.0.1:8080""""
+
+def parse_arguments():
+    parser = argparse.ArgumentParser("Metrics Collection")
+    parser.add_argument (
+        "--ip",
+        dest="ip_address",
+        required=True,
+        help="Target IP address (http://127.0.0.1:8080)"
+    )
+    return parser.parse_args()
+
 
 def get_cpu_use() -> float:
     """ Percent of utilization """
@@ -69,8 +82,8 @@ def send_to_server(mac_address: str, payload: dict) -> None:
         print(f"Failed to send data: {response.status_code}")
 
 
-if __name__ == "__main__":
-    
+if __name__ == "__main__":    
+    args = parse_arguments()
     payload = get_metrics()
     mac_address = get_mac_address()
     send_to_server(mac_address, payload)
