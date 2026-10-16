@@ -60,9 +60,10 @@ graph TD;
    ```
 
 4. **Run the collectors**
+   Arguement: url of the main server
 
    ```bash
-   python3 collectors.py
+   python3 collectors.py http://127.0.0.1:8080
    ```
 
 5. **Run the Main server**
@@ -77,6 +78,43 @@ graph TD;
    # Example using iptables on the monitored VM (replace X.X.X.X with Dashboard IP)
    sudo iptables -A INPUT -p tcp -s X.X.X.X --dport 5000 -j ACCEPT
    sudo iptables -A INPUT -p tcp --dport 5000 -j DROP
+   ```
+
+7. **Create an Python Executeable**
+   Creates a single executeable file
+
+   ```bash
+   pip3 install pyinstaller
+   pyinstaller --onefile --console --optimize 2 collectors.py
+   ```
+
+   ```bash
+   pip3 install streamlit-desktop-app
+   streamlit-desktop-app build dashboard.py --name "dashboard"
+   ```
+
+8. **Install from github releases**
+
+   ```bash
+   wget -O collectors https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/releases/download/Distrabution/collectors && chmod +x collectors
+   ```
+
+   ```bash
+   wget -O dashboard https://notreadyyet.com && chmod +x dashboard
+   ```
+
+9. **Stress Test Script**
+
+   ```bash
+   wget -O stress_load.sh https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/blob/main/stress_load.sh && chmod +x stress_load.sh
+   ./stress_load.sh
+   ```
+
+10. **Setup Firewall Script**
+
+   ```bash
+   wget -O setup_firewall.sh https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/setup_firewall.sh && chmod +x setup_firewall.sh
+   ./setup_firewall.sh IP:PORT
    ```
 
 ## Contributers
