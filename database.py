@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 import asyncio
+from random import randint, random
 from typing import List
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import asynctinydb
+
+from metrics import Metrics
 
 
 class TinyFluxDB:
@@ -61,12 +64,20 @@ class TinyFluxDB:
         records = await self.db.all()
         return sorted({record[self.mac_address_tag] for record in records})
 
+    async def insert_dummy_data(self):
+        for _ in range(16):
+            metric_dict = {}
+            random_mac = ':'.join(f"{randint(0, 255):02x}" for _ in range(6))
+            for metrics in Metrics:
+                metric_dict[metrics.value] = random()
+
+            await self.insert_data(random_mac, metric_dict)
 
 if __name__ == "__main__": 
     db = TinyFluxDB()
 
     async def main() -> None:
-        await db.insert_data("dummydata", {"test": 25, "test1": 30})
+        await db.insert_dummy_data()
         print(await db.get_mac_addresses())
         print(await db.query_data("dummydata", 10))
 
