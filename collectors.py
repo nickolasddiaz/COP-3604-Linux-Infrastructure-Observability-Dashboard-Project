@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+import os
+import psutil
 import requests
+from getmac import get_mac_address as gma
 import psutil
 import argparse
 
@@ -33,14 +36,14 @@ def get_storage_use(mount_point: str = "/") -> float:
 def get_network_use() -> float:
     """ Total network use in Megabytes """
     net = psutil.net_io_counters()
-    total_bytes = net.bytes_sent + net.bytes_received
-    return rount(total_bytes / (1024 * 1024), 2)
+    total_bytes = net.bytes_sent + net.bytes_recv
+    return round(total_bytes / (1024 * 1024), 2)
 
 def get_load() -> float:
     """ Load average of system over 1 minute """
     if hasattr(os, "getloadavg"):
-        return round(os.getloadavg()[0], 2)
-    return round(psutil.cpu_percent(interval=0.1) / 100.0 * (psutil.cpu_count) or 1)
+        return round(os.getloadavg()[0], 2) # type: ignore
+    return round(psutil.cpu_percent(interval=0.1) / 100.0 * (psutil.cpu_count() or 1), 2)
 
 def get_metrics() -> dict[str, float]:
     """Gets a dictionary of the metrics.
@@ -48,23 +51,19 @@ def get_metrics() -> dict[str, float]:
         Returns: dict[str, float]: 
     """
     return {
-        metrics.CPU: get_cpu_use(),
-        metrics.MEMORY: get_memory_use(),
-        metrics.STORAGE: get_storage_use(),
-        metrics.NETWORK: get_network_use(),
-        metrics.LOAD: get_load(),
-    }
-
-    # To-do add more metrics and create functions to get them
-    return {
-        Metrics.CPU: 90,
-        Metrics.MEMORY: 1000,
-        Metrics.STORAGE: 50,
+        Metrics.CPU: get_cpu_use(),
+        Metrics.MEMORY: get_memory_use(),
+        Metrics.STORAGE: get_storage_use(),
+        Metrics.NETWORK: get_network_use(),
+        Metrics.LOAD: get_load(),
     }
 
 def get_mac_address() -> str:
     # To-do get mac address
-    return "test_mac_address"
+    mac = gma()
+    if mac is None:
+        raise LookupError("Mac-Address cannot be retreived")
+    return mac
 
 def send_to_server(mac_address: str, payload: dict) -> None:
     """Triggers a POST request to deliver a JSON payload to the server."""
@@ -83,9 +82,8 @@ def send_to_server(mac_address: str, payload: dict) -> None:
         print(f"Failed to send data: {response.status_code}")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     args = parse_arguments()
-
     payload = get_metrics()
     mac_address = get_mac_address()
     send_to_server(mac_address, payload)

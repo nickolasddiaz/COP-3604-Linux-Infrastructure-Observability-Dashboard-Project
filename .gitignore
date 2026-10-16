@@ -2,6 +2,7 @@
 
 # tinyflux DB
 *.csv
+database.json
 
 # Editors
 .vscode/

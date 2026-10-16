@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import asyncio
 import time
 import pandas as pd
 import plotly.express as px
@@ -16,9 +17,9 @@ st.set_page_config(
 st.title("COP-3604 Linux Infrastructure Observability Dashboard")
 
 
-def load_mac_addresses(db: TinyFluxDB) -> list[str]:
+async def load_mac_addresses(db: TinyFluxDB) -> list[str]:
     """Safely extract unique MAC addresses from TinyFluxDB tag values."""
-    raw_tags = db.get_mac_addresses()
+    raw_tags = await db.get_mac_addresses()
     # TinyFlux get_tag_values() returns a dict {'mac-address': [...]}
     if isinstance(raw_tags, dict):
         return raw_tags.get(db.mac_address_tag, [])
@@ -31,12 +32,42 @@ def points_to_dataframe(points: list) -> pd.DataFrame:
     """Convert TinyFlux Point objects into a sorted Pandas DataFrame."""
     rows = []
     for pt in points:
+        # TinyFlux may return mapping-like Documents instead of Point objects.
+        def value(obj, key, default=None):
+            if isinstance(obj, dict):
+                return obj.get(key, default)
+            try:
+                return obj[key]
+            except (KeyError, TypeError, AttributeError, IndexError):
+                return getattr(obj, key, default)
+
+        raw_time = value(pt, "time")
+        if raw_time is None:
+            raw_time = value(pt, "timestamp", value(pt, "_time"))
+        if raw_time is None:
+            continue
+        datetime_value = pd.to_datetime(raw_time, errors="coerce")
+        if pd.isna(datetime_value):
+            continue
+
+        tags = value(pt, "tags", {}) or {}
+        fields = value(pt, "fields", {}) or {}
+        if not isinstance(tags, dict):
+            tags = {}
+        if not isinstance(fields, dict):
+            fields = {}
+
         row = {
-            "timestamp": pt.time.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
-            "datetime": pt.time,
-            "mac_address": pt.tags.get("mac-address", "unknown"),
+            "timestamp": datetime_value.to_pydatetime().astimezone().strftime("%Y-%m-%d %H:%M:%S"),
+            "datetime": datetime_value,
+            "mac_address": tags.get("mac-address", value(pt, "mac-address", "unknown")),
         }
-        row.update(pt.fields)
+        row.update(fields)
+        for metric in (Metrics.CPU, Metrics.MEMORY, Metrics.STORAGE, Metrics.NETWORK, Metrics.LOAD):
+            metric_name = str(metric)
+            metric_value = value(pt, metric_name)
+            if metric_value is not None and metric_name not in row:
+                row[metric_name] = metric_value
         rows.append(row)
 
     if not rows:
@@ -52,10 +83,10 @@ def points_to_dataframe(points: list) -> pd.DataFrame:
 
 # Re-instantiate TinyFluxDB on each run to read fresh rows appended by dashboard.py
 db = TinyFluxDB()
-mac_list = load_mac_addresses(db)
+mac_list = asyncio.run(load_mac_addresses(db))
 
 # --- Sidebar Controls ---
-st.sidebar.header("🖥️ Server & Time Window")
+st.sidebar.header("Server & Time Window")
 
 if not mac_list:
     st.warning(
@@ -70,19 +101,19 @@ selected_mac = st.sidebar.selectbox("Select Monitored Server (MAC)", mac_list)
 hours_past = st.sidebar.slider("Historical Window (Hours)", min_value=1, max_value=72, value=12)
 
 st.sidebar.markdown("---")
-st.sidebar.header("🚨 Alert Thresholds")
+st.sidebar.header("Alert Thresholds")
 cpu_threshold = st.sidebar.slider("CPU Usage Threshold (%)", 10, 100, 80)
 mem_threshold = st.sidebar.slider("Memory Usage Threshold (%)", 10, 100, 80)
 storage_threshold = st.sidebar.slider("Storage Usage Threshold (%)", 10, 100, 85)
 load_threshold = st.sidebar.slider("System Load (1m) Threshold", 0.5, 16.0, 2.5, step=0.5)
 
 st.sidebar.markdown("---")
-st.sidebar.header("🔄 Automation")
+st.sidebar.header("Automation")
 auto_refresh = st.sidebar.checkbox("Auto-Refresh Dashboard", value=True)
 refresh_interval = st.sidebar.slider("Refresh Interval (s)", 2, 30, 5)
 
 # Query data from TinyFluxDB
-points = db.query_data(selected_mac, hours_past=hours_past)
+points = asyncio.run(db.query_data(selected_mac, hours_past=hours_past))
 df = points_to_dataframe(points)
 
 if df.empty:
@@ -99,8 +130,8 @@ if latest[Metrics.MEMORY] >= mem_threshold:
     alerts.append(f"**Memory Usage** is at `{latest[Metrics.MEMORY]:.1f}%` (Threshold: `{mem_threshold}%`)")
 if latest[Metrics.STORAGE] >= storage_threshold:
     alerts.append(f"**Storage Usage** is at `{latest[Metrics.STORAGE]:.1f}%` (Threshold: `{storage_threshold}%`)")
-# if latest[Metrics.LOAD] >= load_threshold:
-#     alerts.append(f"**System Load** is at `{latest[Metrics.LOAD]:.2f}` (Threshold: `{load_threshold}`)")
+if latest[Metrics.LOAD] >= load_threshold:
+    alerts.append(f"**System Load** is at `{latest[Metrics.LOAD]:.2f}` (Threshold: `{load_threshold}`)")
 
 if alerts:
     for alert_msg in alerts:
@@ -135,17 +166,17 @@ with col3:
         delta="OVER THRESHOLD" if sto_val >= storage_threshold else "Normal",
         delta_color="inverse" if sto_val >= storage_threshold else "normal",
     )
-# with col4:
-#     net_val = latest[Metrics.NETWORK]
-#     st.metric("Network I/O (Total)", f"{net_val:.2f} MB")
-# with col5:
-#     load_val = latest[Metrics.LOAD]
-#     st.metric(
-#         "System Load (1m)",
-#         f"{load_val:.2f}",
-#         delta="OVER THRESHOLD" if load_val >= load_threshold else "Normal",
-#         delta_color="inverse" if load_val >= load_threshold else "normal",
-#     )
+with col4:
+    net_val = latest[Metrics.NETWORK]
+    st.metric("Network I/O (Total)", f"{net_val:.2f} MB")
+with col5:
+    load_val = latest[Metrics.LOAD]
+    st.metric(
+        "System Load (1m)",
+        f"{load_val:.2f}",
+        delta="OVER THRESHOLD" if load_val >= load_threshold else "Normal",
+        delta_color="inverse" if load_val >= load_threshold else "normal",
+    )
 
 st.markdown("---")
 
@@ -186,23 +217,23 @@ with tab_realtime:
         )
         st.plotly_chart(fig_rt_util, use_container_width=True)
 
-    # with c2:
-    #     fig_rt_load = go.Figure()
-    #     fig_rt_load.add_trace(go.Scatter(
-    #         x=recent_df["timestamp"], y=recent_df[Metrics.LOAD],
-    #         mode="lines+markers", name="1m Load Avg"
-    #     ))
-    #     fig_rt_load.add_hline(
-    #         y=load_threshold, line_dash="dash", line_color="red",
-    #         annotation_text=f"Load Threshold ({load_threshold})"
-    #     )
-    #     fig_rt_load.update_layout(
-    #         title="Real-Time System Load Average",
-    #         xaxis_title="Timestamp",
-    #         yaxis_title="Load",
-    #         height=370,
-    #     )
-    #     st.plotly_chart(fig_rt_load, use_container_width=True)
+    with c2:
+        fig_rt_load = go.Figure()
+        fig_rt_load.add_trace(go.Scatter(
+            x=recent_df["timestamp"], y=recent_df[Metrics.LOAD],
+            mode="lines+markers", name="1m Load Avg"
+        ))
+        fig_rt_load.add_hline(
+            y=load_threshold, line_dash="dash", line_color="red",
+            annotation_text=f"Load Threshold ({load_threshold})"
+        )
+        fig_rt_load.update_layout(
+            title="Real-Time System Load Average",
+            xaxis_title="Timestamp",
+            yaxis_title="Load",
+            height=370,
+        )
+        st.plotly_chart(fig_rt_load, use_container_width=True)
 
 with tab_historical:
     h1, h2 = st.columns(2)
@@ -217,16 +248,16 @@ with tab_historical:
         fig_hist_pct.update_layout(yaxis=dict(range=[0, 105]), height=370)
         st.plotly_chart(fig_hist_pct, use_container_width=True)
 
-    # with h2:
-    #     fig_hist_net = px.area(
-    #         df,
-    #         x="timestamp",
-    #         y=Metrics.NETWORK,
-    #         title=f"Historical Cumulative Network Traffic (MB) — Last {hours_past}h",
-    #         labels={Metrics.NETWORK: "Megabytes (MB)", "timestamp": "Time"},
-    #     )
-    #     fig_hist_net.update_layout(height=370)
-    #     st.plotly_chart(fig_hist_net, use_container_width=True)
+    with h2:
+        fig_hist_net = px.area(
+            df,
+            x="timestamp",
+            y=Metrics.NETWORK,
+            title=f"Historical Cumulative Network Traffic (MB) — Last {hours_past}h",
+            labels={Metrics.NETWORK: "Megabytes (MB)", "timestamp": "Time"},
+        )
+        fig_hist_net.update_layout(height=370)
+        st.plotly_chart(fig_hist_net, use_container_width=True)
 
 with tab_raw:
     st.dataframe(df.iloc[::-1], use_container_width=True)

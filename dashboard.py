@@ -54,7 +54,7 @@ class Dashboard:
                 if isinstance(content, dict) and content:
                     # Ensure all values are stored as floats
                     clean_fields = {str(k): float(v) for k, v in content.items()}
-                    self.db.insert_data(mac_address, clean_fields)
+                    await self.db.insert_data(mac_address, clean_fields)
                     print(f"Inserted into TinyFluxDB ({mac_address}): {clean_fields}")
 
                 idx = next_idx
