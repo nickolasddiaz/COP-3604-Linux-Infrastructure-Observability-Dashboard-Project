@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
+import asyncio
 from typing import List
-from tinyflux.queries import TimeQuery
 from datetime import datetime, timedelta, timezone
-from tinyflux import TagQuery, TinyFlux, Point
 from pathlib import Path
+
+import asynctinydb
 
 
 class TinyFluxDB:
     def __init__(self) -> None:
-        DB_PATH = Path('./database.csv')
-
-        self.db = TinyFlux(DB_PATH)
-        self.Tags = TagQuery()
-        self.Time = TimeQuery()
-
-        self.mac_address_tag: str = "mac-address"
+        db_path = Path('./database.json')
+        self.db = asynctinydb.TinyDB(db_path)
+        self.Record = asynctinydb.Query()
+        self.mac_address_tag: str = "mac_address"
         self.time_zone = timezone.utc
 
-    def insert_data(self, mac_address: str, fields: dict) -> None:
+    async def insert_data(self, mac_address: str, fields: dict) -> None:
         """Insert data into the database.
 
         Args:
@@ -28,15 +26,14 @@ class TinyFluxDB:
             None: 
         """
 
-        point = Point(
-            time=datetime.now(self.time_zone),
-            # measurement='default', 
-            tags={self.mac_address_tag: mac_address},
-            fields=fields
-        )
-        self.db.insert(point)
+        record = {
+            self.mac_address_tag: mac_address,
+            "timestamp": datetime.now(self.time_zone).isoformat(),
+            "fields": fields,
+        }
+        await self.db.insert(record)
 
-    def query_data(self, macaddress: str, hours_past: int) -> List[dict]:
+    async def query_data(self, macaddress: str, hours_past: int) -> List[dict]:
         """Search data into the database.
         
             Args:
@@ -46,25 +43,31 @@ class TinyFluxDB:
             Returns:
                 List[dict]: The results of the query
         """
-        hours_ago = datetime.now(self.time_zone) - timedelta(hours=hours_past)
+        hours_ago = (datetime.now(self.time_zone) - timedelta(hours=hours_past)).isoformat()
+        records = await self.db.all()
+        return [
+            record
+            for record in records
+            if record[self.mac_address_tag] == macaddress
+            and record["timestamp"] >= hours_ago
+        ]
 
-        return self.db.search((self.Tags[self.mac_address_tag] == macaddress) 
-                        & (self.Time >= hours_ago))
-
-    def get_mac_addresses(self) -> List[str]:
+    async def get_mac_addresses(self) -> List[str]:
         """Get a list of mac addresses in the DB.
         
             Returns:
                 List[dict]: Every mac address
         """
-        return self.db.get_tag_values()
-
-    def generate_dummy_data(self):
-        raise NotImplementedError
+        records = await self.db.all()
+        return sorted({record[self.mac_address_tag] for record in records})
 
 
 if __name__ == "__main__": 
     db = TinyFluxDB()
-    db.insert_data("dummydata", {"test": 25, "test1": 30})
-    print(db.get_mac_addresses())
-    print(db.query_data("dummydata", 10))
+
+    async def main() -> None:
+        await db.insert_data("dummydata", {"test": 25, "test1": 30})
+        print(await db.get_mac_addresses())
+        print(await db.query_data("dummydata", 10))
+
+    asyncio.run(main())
