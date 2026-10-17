@@ -1,10 +1,17 @@
 # [COP-3604 Linux Infrastructure Observability Dashboard Project](https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project)
 
-This a group project from Fall 2026 COP3604 – System Administration using unix at Florida Polytechnic University taught by professor Christian Navarro
+This a group project from Fall 2026 COP3604 – System Administration using UNIX at Florida Polytechnic University taught by professor Christian Navarro
 
 ## Objective
 
 The primary objective of this collaboritive (group) project is to design, implement, and evaluate a performance monitoring solution for a remote, cloud-based Linux infrastructure based on number real-world stresses that affect production servers.
+
+## Contributors
+
+- Andres Saldarriaga
+- Nickolas Diaz
+- Sydney Prall
+- Jordan Baumann
 
 ## Instalation
 
@@ -82,10 +89,13 @@ graph TD;
    ```
 
 6. **Install from github releases**
+   Run and download collectors
 
    ```bash
    wget -O collectors https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/releases/download/Distrabution/collectors && chmod +x collectors
    ```
+
+   Run and download the main server/dashboard
 
    ```bash
    wget -O dashboard https://notreadyyet.com && chmod +x dashboard
@@ -93,28 +103,65 @@ graph TD;
 
 7. **Stress Test Script**
 
+   Run stress test without downloading it
+
    ```bash
-   wget -O stress_load.sh https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/blob/main/stress_load.sh && chmod +x stress_load.sh
-   ./stress_load.sh
+   curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/stress_load.sh | bash
+   ```
+
+   Install the stress test systemmd service, called stress_load, will persist after system shuts down
+
+   ```bash
+   curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/add_systemmd_stress_load.sh | sudo bash
+   ```
+
+   Uninstall the stress test systemmd service
+
+   ```bash
+   curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/remove_systemmd_stress_load.sh | sudo bash
+   ```
+
+   Check live status
+
+   ```bash
+   sudo systemctl status stress_load
+   ```
+
+   View execution logs
+
+   ```bash
+   sudo journalctl -u stress_load -f
+   ```
+
+   Stop the service
+
+   ```bash
+   sudo systemctl stop stress_load
+   ```
+
+   Restart the service
+
+   ```bash
+   sudo systemctl restart stress_load
    ```
 
 8. **Automated Collectors Install**
    To install collectors, creates a user called "collectoruser", adds iptable entries to only allow access to one ip, and create a cron job that runs every 5 minutes
 
    ```bash
-   curl -s https://example.com | sudo bash -i 10.0.0.1 -p 8080
+   curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/add_collector_cron_job.sh | sudo bash -s -- -i 10.0.0.1 -p 8080
    ```
 
    Verifies the installer
 
    ```bash
-   curl -s https://example.com | sudo bash
+   curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/verify_collector_cron_job.sh | sudo bash
    ```
 
    Removes everything created from the collectors installer
 
    ```bash
-   curl -s https://example.com | sudo bash
+   curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/remove_collector_cron_job.sh | sudo bash
    ```
 
 ## Contributers

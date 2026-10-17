@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # remove_collector_cron_job.sh
 
 # check if sudo
