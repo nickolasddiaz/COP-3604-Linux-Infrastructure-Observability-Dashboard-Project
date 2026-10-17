@@ -99,12 +99,19 @@ graph TD;
    ```
 
 8. **Automated Collectors Install**
+   To install collectors, creates a user called "collectoruser", adds iptable entries to only allow access to one ip, and create a cron job that runs every 5 minutes
 
    ```bash
-   curl -s https://example.com | sudo bash -s --ip http:mainserverip:8080
+   curl -s https://example.com | sudo bash -i 10.0.0.1 -p 8080
    ```
 
-9. **Automated Collectors Uninstall**
+   Verifies the installer
+
+   ```bash
+   curl -s https://example.com | sudo bash
+   ```
+
+   Removes everything created from the collectors installer
 
    ```bash
    curl -s https://example.com | sudo bash
