@@ -10,7 +10,7 @@ import asynctinydb
 from metrics import Metrics
 
 
-class TinyFluxDB:
+class AsyncTinyDB:
     def __init__(self) -> None:
         db_path = Path('./database.json')
         self.db = asynctinydb.TinyDB(db_path)
@@ -74,7 +74,7 @@ class TinyFluxDB:
             await self.insert_data(random_mac, metric_dict)
 
 if __name__ == "__main__": 
-    db = TinyFluxDB()
+    db = AsyncTinyDB()
 
     async def main() -> None:
         await db.insert_dummy_data()

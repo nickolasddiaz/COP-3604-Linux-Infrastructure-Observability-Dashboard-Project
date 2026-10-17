@@ -3,7 +3,7 @@ import asyncio
 import json
 import threading
 import streamlit as st
-from database import TinyFluxDB
+from database import AsyncTinyDB
 from streamlit.starlette import App
 from contextlib import asynccontextmanager
 import streamlit as st
@@ -16,7 +16,7 @@ from receiver import start_receiver
 class Dashboard:
 
     def __init__(self) -> None:
-        self.db = TinyFluxDB()
+        self.db = AsyncTinyDB()
         self.namedPipe: NamedPipe = NamedPipe()
 
     async def start(self):
@@ -59,7 +59,7 @@ class Dashboard:
                     # Ensure all values are stored as floats
                     clean_fields = {str(k): float(v) for k, v in content.items()}
                     await self.db.insert_data(mac_address, clean_fields)
-                    print(f"Inserted into TinyFluxDB ({mac_address}): {clean_fields}")
+                    print(f"Inserted into TinyDB ({mac_address}): {clean_fields}")
 
                 idx = next_idx
                 while idx < len(text_buffer) and text_buffer[idx].isspace():
