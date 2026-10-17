@@ -6,13 +6,6 @@ This a group project from Fall 2026 COP3604 – System Administration using UNIX
 
 The primary objective of this collaboritive (group) project is to design, implement, and evaluate a performance monitoring solution for a remote, cloud-based Linux infrastructure based on number real-world stresses that affect production servers.
 
-## Contributors
-
-- Andres Saldarriaga
-- Nickolas Diaz
-- Sydney Prall
-- Jordan Baumann
-
 ## Instalation
 
 ### Prerequisites
@@ -145,6 +138,12 @@ graph TD;
    sudo systemctl restart stress_load
    ```
 
+   View the system resources
+
+   ```bash
+   top
+   ```
+
 8. **Automated Collectors Install**
    To install collectors, creates a user called "collectoruser", adds iptable entries to only allow access to one ip, and create a cron job that runs every 5 minutes
 
@@ -166,7 +165,10 @@ graph TD;
 
 ## Contributers
 
-Jordan Baumann, Nickolas Diaz, Sydney Prall, Andres Saldarriaga
+- Andres Saldarriaga
+- Nickolas Diaz
+- Sydney Prall
+- Jordan Baumann
 
 ## Requirements
 

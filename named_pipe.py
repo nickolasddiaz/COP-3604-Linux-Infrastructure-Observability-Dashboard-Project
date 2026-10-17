@@ -131,7 +131,7 @@ class WindowsNamedPipe(AbstractNamedPipe):
         # Create a named pipe server instance
         self.handle = self.win32pipe.CreateNamedPipe(
             self.pipe_path,
-            self.win32pipe.PIPE_ACCESS_DUPLEX | self.win32file.FILE_FLAG_OVERLAPPED,
+            self.win32pipe.PIPE_ACCESS_DUPLEX,
             self.win32pipe.PIPE_TYPE_MESSAGE | self.win32pipe.PIPE_READMODE_MESSAGE | self.win32pipe.PIPE_NOWAIT,
             1, 65536, 65536, 0, None # type: ignore
         )
@@ -139,8 +139,9 @@ class WindowsNamedPipe(AbstractNamedPipe):
         try:
             self.win32pipe.ConnectNamedPipe(self.handle, None)
         except self.pywintypes.error as e:
-            if e.winerror != 548: # ERROR_PIPE_LISTENING
-                pass
+            # 535: ERROR_PIPE_CONNECTED, 536: ERROR_PIPE_LISTENING
+            if e.winerror not in (535, 536):
+                print(f"ConnectNamedPipe notice: {e}")
 
     async def set_writing_mode(self):
         # Windows client side opening a named pipe
@@ -150,11 +151,12 @@ class WindowsNamedPipe(AbstractNamedPipe):
                     self.pipe_path,
                     self.win32file.GENERIC_WRITE | self.win32file.GENERIC_READ,
                     0, None, self.win32file.OPEN_EXISTING,
-                    self.win32file.FILE_FLAG_OVERLAPPED, None
+                    0, None
                 )
             except self.pywintypes.error:
                 print("waiting for reading mode to be set")
                 await asyncio.sleep(1) # Wait for server pipe to be created
+                
 
     async def send_message(self, message: bytes):
         if self.handle is not None:
@@ -171,7 +173,7 @@ class WindowsNamedPipe(AbstractNamedPipe):
                     break
                 chunks.append(data)
         except self.pywintypes.error as e:
-            if e.winerror == 232: # ERROR_NO_DATA
+            if e.winerror in (232, 536): # ERROR_NO_DATA / ERROR_PIPE_LISTENING (pipe empty or no client connected)
                 pass
             elif e.winerror == 109: # ERROR_BROKEN_PIPE (Client disconnected)
                 self.close()
@@ -179,7 +181,6 @@ class WindowsNamedPipe(AbstractNamedPipe):
                 raise
         if chunks:
             data = b"".join(chunks)
-            # if running on a thread it won't print to console
             print(f"Data received: {data}")
             return data
         return None

@@ -20,15 +20,19 @@ class Dashboard:
         self.namedPipe: NamedPipe = NamedPipe()
 
     async def start(self):
+        print("Setting up named pipe reading mode...")
         await self.namedPipe.set_reading_mode()
 
         # create a new thread and allow it to print in the main console
         # start_receiver is a seprate process, which receives web requests and sends that data to the named pipe
+        print("Starting receiver thread...")
         self.receiver_thread = threading.Thread(target=start_receiver, daemon=True)
         self.receiver_thread.start()
 
         # asynchronous read from the pipe every X amount of seconds 
+        print("Creating background scheduler task...")
         self.scheduler_task = asyncio.create_task(self.background_scheduler())
+        print("Background scheduler successfully created.")
 
     async def receive_from_client(self) -> None:
         """
