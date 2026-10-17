@@ -8,7 +8,6 @@ import argparse
 
 from metrics import Metrics
 
-#"""SERVER_URL = "http://127.0.0.1:8080""""
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Metrics Collection")
@@ -18,6 +17,10 @@ def parse_arguments() -> argparse.Namespace:
         required=True,
         help="Target IP address (http://127.0.0.1:8080)"
     )
+    args = parser.parse_args()
+
+    if args is None:
+        raise ValueError("Arguements do not exist")
     return parser.parse_args()
 
 

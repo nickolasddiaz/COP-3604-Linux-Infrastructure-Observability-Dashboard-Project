@@ -16,6 +16,7 @@ Python 3.14 or later
 
 ```bash
 COP-3604 Linux Infrastructure Observability Dashboard Project/$ tree -F
+├── script/          # Folder for helper shell scripts  
 ├── app.py           # Streamlit web app, and uses plotly to visualise the data
 ├── collectors.py    # Collects performance metrics and sends data to receiver
 ├── dashboard.py     # Spawns Streamlit app, named_pipe connections, and web receiver
@@ -51,36 +52,23 @@ graph TD;
     ```bash
    python3 -m venv .venv
    source .venv/bin/activate
+   pip3 install -r requirements.txt
     ```
 
-3. **Install dependencies**
+3. **Run the Main server**
 
    ```bash
-   pip3 install -r requirements.txt
+   streamlit run dashboard.py
    ```
 
 4. **Run the collectors**
    Arguement: url of the main server
 
    ```bash
-   python3 collectors.py http://127.0.0.1:8080
+   python3 collectors.py --ip http://127.0.0.1:8080
    ```
 
-5. **Run the Main server**
-
-   ```bash
-   streamlit run dashboard.py
-   ```
-
-6. **Setup Single-IP Security**
-
-   ```bash
-   # Example using iptables on the monitored VM (replace X.X.X.X with Dashboard IP)
-   sudo iptables -A INPUT -p tcp -s X.X.X.X --dport 5000 -j ACCEPT
-   sudo iptables -A INPUT -p tcp --dport 5000 -j DROP
-   ```
-
-7. **Create an Python Executeable**
+5. **Create an Python Executeable**
    Creates a single executeable file
 
    ```bash
@@ -93,7 +81,7 @@ graph TD;
    streamlit-desktop-app build dashboard.py --name "dashboard"
    ```
 
-8. **Install from github releases**
+6. **Install from github releases**
 
    ```bash
    wget -O collectors https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/releases/download/Distrabution/collectors && chmod +x collectors
@@ -103,18 +91,23 @@ graph TD;
    wget -O dashboard https://notreadyyet.com && chmod +x dashboard
    ```
 
-9. **Stress Test Script**
+7. **Stress Test Script**
 
    ```bash
    wget -O stress_load.sh https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/blob/main/stress_load.sh && chmod +x stress_load.sh
    ./stress_load.sh
    ```
 
-10. **Setup Firewall Script**
+8. **Automated Collectors Install**
 
    ```bash
-   wget -O setup_firewall.sh https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/setup_firewall.sh && chmod +x setup_firewall.sh
-   ./setup_firewall.sh IP:PORT
+   curl -s https://example.com | sudo bash -s --ip http:mainserverip:8080
+   ```
+
+9. **Automated Collectors Uninstall**
+
+   ```bash
+   curl -s https://example.com | sudo bash
    ```
 
 ## Contributers
