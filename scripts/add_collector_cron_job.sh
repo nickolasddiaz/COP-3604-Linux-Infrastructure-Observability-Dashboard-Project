@@ -23,7 +23,7 @@ if [ -z "$IP_ADDRESS" ] || [ -z "$PORT" ]; then
     exit 1
 fi
 
-URL="$IP_ADDRESS:$PORT"
+URL="http://$IP_ADDRESS:$PORT"
 
 USERNAME="collectoruser"
 

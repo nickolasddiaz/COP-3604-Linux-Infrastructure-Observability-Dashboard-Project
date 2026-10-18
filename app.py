@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import asyncio
-from datetime import datetime
-import time
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -9,6 +7,60 @@ import streamlit as st
 
 from database import AsyncTinyDB
 from metrics import Metrics
+
+
+def render_live_websocket_widget():
+    """Renders an isolated real-time WebSocket client card that updates via DOM manipulation without Python reruns."""
+    widget_html = """
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 16px; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="margin: 0; color: #1e293b; font-size: 16px;">Live WebSocket Telemetry Feed</h4>
+            <span id="ws-status" style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 12px; background: #fef3c7; color: #d97706;">Connecting...</span>
+        </div>
+        <div id="ws-live-content" style="font-family: monospace; font-size: 13px; color: #334155; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #f1f5f9; height: 140px; overflow-y: auto;">
+            Waiting for real-time payloads from server...
+        </div>
+    </div>
+
+    <script>
+        // Streamlit renders this HTML inside an iframe, whose own host may be empty.
+        const appUrl = new URL(document.referrer || window.location.href);
+        const wsUrl = `${appUrl.protocol === 'https:' ? 'wss:' : 'ws:'}//${appUrl.host}/ws/telemetry`;
+        const ws = new WebSocket(wsUrl);
+
+        const statusBadge = document.getElementById('ws-status');
+        const contentBox = document.getElementById('ws-live-content');
+
+        ws.onopen = function() {
+            statusBadge.style.background = '#dcfce7';
+            statusBadge.style.color = '#16a34a';
+            statusBadge.innerText = 'Connected Live';
+        };
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const timeStr = new Date().toLocaleTimeString();
+            
+            let metricsHtml = `<div style="margin-bottom: 6px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px;">`;
+            metricsHtml += `<strong style="color: #0284c7;">[${timeStr}] MAC: ${data.mac_address}</strong><br>`;
+            
+            for (const [key, value] of Object.entries(data.content)) {
+                metricsHtml += `&nbsp;&nbsp;<code>${key}</code>: <b>${value}</b> `;
+            }
+            metricsHtml += `</div>`;
+            
+            // Prepend latest message to top of box
+            contentBox.innerHTML = metricsHtml + contentBox.innerHTML;
+        };
+
+        ws.onclose = function() {
+            statusBadge.style.background = '#fee2e2';
+            statusBadge.style.color = '#dc2626';
+            statusBadge.innerText = 'Disconnected';
+        };
+    </script>
+    """
+    st.iframe(widget_html, height=210)
 
 st.set_page_config(
     page_title="COP-3604 Linux Infrastructure Observability Dashboard",
@@ -80,6 +132,8 @@ def points_to_dataframe(points: list) -> pd.DataFrame:
     return df
 
 
+render_live_websocket_widget()
+
 # Re-instantiate TinyDB on each run to read fresh rows appended by dashboard.py
 db = AsyncTinyDB()
 mac_list = asyncio.run(load_mac_addresses(db))
@@ -106,11 +160,6 @@ mem_threshold = st.sidebar.slider("Memory Usage Threshold (%)", 10, 100, 80)
 storage_threshold = st.sidebar.slider("Storage Usage Threshold (%)", 10, 100, 85)
 load_threshold = st.sidebar.slider("System Load (1m) Threshold", 0.5, 16.0, 2.5, step=0.5)
 time_threshold_minutes = st.sidebar.slider("Time Check Threshold (minutes)", 5, 60, 10, step=1)
-
-st.sidebar.markdown("---")
-st.sidebar.header("Automation")
-auto_refresh = st.sidebar.checkbox("Auto-Refresh Dashboard", value=True)
-refresh_interval = st.sidebar.slider("Refresh Interval (s)", 2, 30, 5)
 
 # Query data from TinyDB
 points = asyncio.run(db.query_data(selected_mac, hours_past=hours_past))
@@ -273,7 +322,3 @@ with tab_historical:
 
 with tab_raw:
     st.dataframe(df.iloc[::-1], width='stretch')
-
-if auto_refresh:
-    time.sleep(refresh_interval)
-    st.rerun()

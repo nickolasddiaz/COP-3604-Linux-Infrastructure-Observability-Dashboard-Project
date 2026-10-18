@@ -32,10 +32,11 @@ COP-3604 Linux Infrastructure Observability Dashboard Project/$ tree -F
 
 ```mermaid
 graph TD;
-    A[Metrics Sender i.e. collectors.py]--> |HTTP Post Request| B[Web Server i.e. receiver.py];
-    B--> |Named Pipe| C[Main Server i.e. dashboard.py];
-    C--> |DB connection| D[Time Series DB i.e. database.py];
-    C<--> |Websockets Connection|E[Front End website using streamlit i.e. app.py];
+    A[Metrics Sender i.e. collectors.py] --> |HTTP Post Request| B[Web Server i.e. receiver.py];
+    B --> |Named Pipe| C[Main Server i.e. dashboard.py];
+    C --> D[Time Series DB i.e. database.py];
+    C <--> |Websockets Connection|E[Front End website using streamlit i.e. app.py];
+    D --> E
 ```
 
 ### Step-by-Step Guide
