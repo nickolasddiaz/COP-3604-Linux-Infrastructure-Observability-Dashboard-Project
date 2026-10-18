@@ -70,16 +70,11 @@ graph TD;
    ```
 
 5. **Create an Python Executeable**
-   Creates a single executeable file
+   Creates a single executeable file for collectors.py
 
    ```bash
    pip3 install pyinstaller
    pyinstaller --onefile --console --optimize 2 collectors.py
-   ```
-
-   ```bash
-   pip3 install streamlit-desktop-app
-   streamlit-desktop-app build dashboard.py --name "dashboard"
    ```
 
 6. **Install from github releases**
@@ -87,12 +82,6 @@ graph TD;
 
    ```bash
    wget -O collectors https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/releases/download/Distrabution/collectors && chmod +x collectors
-   ```
-
-   Run and download the main server/dashboard
-
-   ```bash
-   wget -O dashboard https://notreadyyet.com && chmod +x dashboard
    ```
 
 7. **Stress Test Script**
