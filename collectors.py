@@ -71,18 +71,25 @@ def get_mac_address() -> str:
 def send_to_server(mac_address: str, payload: dict, SERVER_URL: str) -> None:
     """Triggers a POST request to deliver a JSON payload to the server."""
 
-
-    payload = {
+    body = {
         "mac_address": mac_address,
         "content": payload
     }
 
-    response = requests.post(f"{SERVER_URL}", json=payload)
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "curl/7.68.0"  # or 'Mozilla/5.0'
+    }
+
+    if not SERVER_URL.endswith('/'):
+        SERVER_URL += '/'
+
+    response = requests.post(SERVER_URL, json=body, headers=headers)
     
     if response.status_code == 200:
-        print("\n Data send: Reponse code 200")
+        print("\nData sent: Response code 200")
     else:
-        print(f"Failed to send data: {response.status_code}")
+        print(f"Failed to send data: {response.status_code} - {response.text}")
 
 
 if __name__ == "__main__":    
