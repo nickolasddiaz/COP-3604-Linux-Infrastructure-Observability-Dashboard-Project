@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import asyncio
 from named_pipe import NamedPipe
 
-def start_receiver(port: int = 8080):
+def start_receiver(port: int = 8081):
     """
     Starts a web server that receives requests/metrics
     Once received it will send that data to the named pipe

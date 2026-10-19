@@ -20,8 +20,8 @@ COP-3604 Linux Infrastructure Observability Dashboard Project/$ tree -F
 ├── app.py           # Streamlit web app, and uses plotly to visualise the data
 ├── collectors.py    # Collects performance metrics and sends data to receiver
 ├── dashboard.py     # Spawns Streamlit app, named_pipe connections, and web receiver
-├── database.csv     # TinyFluxDB DB file
-├── database.py      # TinyFluxDB wrapper to store, insert, and query metrics
+├── database.csv     # AsyncTinyDB DB file
+├── database.py      # AsyncTinyDB wrapper to store, insert, and query metrics
 ├── metrics.py       # Enum for metric types
 ├── named_pipe.py    # Named pipe wrapper to share data between processes
 ├── receiver.py      # Starts web server to collect metrics and pipe them forward
@@ -44,6 +44,8 @@ graph TD;
 1. **Clone the repository**
 
    ```bash
+   sudo apt update
+   sudo apt install git -y
    git clone https://github.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project.git
    cd COP-3604-Linux-Infrastructure-Observability-Dashboard-Project
    ```
@@ -51,6 +53,7 @@ graph TD;
 2. **Create environment**
 
     ```bash
+   sudo apt install python3 python3-pip python3-venv -y
    python3 -m venv .venv
    source .venv/bin/activate
    pip3 install -r requirements.txt
@@ -58,15 +61,21 @@ graph TD;
 
 3. **Run the Main server**
 
+   PRO TIP: use a port that is not being used to check: if you see 0.0.0.0:8080 it is avaible: 127.0.0.1:8080 then it is not avaible. COST ME MANY HOURS
+
+   ```bash
+   ss -tln | grep :8080
+   ```
+
    ```bash
    streamlit run dashboard.py
    ```
 
 4. **Run the collectors**
-   Arguement: url of the main server
+   Arguement: url of the main server, if it returns a 405 response then something else is using that port
 
    ```bash
-   python3 collectors.py --ip http://127.0.0.1:8080
+   python3 collectors.py --ip http://127.0.0.1:8081
    ```
 
 5. **Create an Python Executeable**
@@ -138,7 +147,7 @@ graph TD;
    To install collectors, creates a user called "collectoruser", adds iptable entries to only allow access to one ip, and create a cron job that runs every 5 minutes
 
    ```bash
-   curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/add_collector_cron_job.sh | sudo bash -s -- -i 10.0.0.1 -p 8080
+   curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/add_collector_cron_job.sh | sudo bash -s -- -i 10.0.0.1 -p 8081
    ```
 
    Verifies the installer
@@ -151,6 +160,33 @@ graph TD;
 
    ```bash
    curl -s https://raw.githubusercontent.com/nickolasddiaz/COP-3604-Linux-Infrastructure-Observability-Dashboard-Project/refs/heads/main/scripts/remove_collector_cron_job.sh | sudo bash
+   ```
+
+9. **GCP allow firewall ports**
+   Run this command on the ports that need access, the server that is running dashboard.py, replace 8501 and 8081 with your own ports
+
+   ```bash
+   gcloud auth login
+   ```
+
+   ```bash
+   gcloud compute firewall-rules create allow-streamlit \
+    --direction=INGRESS \
+    --priority=1000 \
+    --network=default \
+    --action=ALLOW \
+    --rules=tcp:8501 \
+    --source-ranges=0.0.0.0/0
+   ```
+
+   ```bash
+   gcloud compute firewall-rules create allow-collectors \
+    --direction=INGRESS \
+    --priority=1000 \
+    --network=default \
+    --action=ALLOW \
+    --rules=tcp:8081 \
+    --source-ranges=0.0.0.0/0
    ```
 
 ## Contributers
